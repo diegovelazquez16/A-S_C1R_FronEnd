@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { User } from '../../../data/models/User';
 import { UserRepository } from '../../../data/repository/userRepository';
-import { UserForm } from '../UserForm';
+import { UserForm } from '../UserForm/UserForm';
 import styles from './UserList.module.css';
 
 export const UserList: React.FC = () => {
@@ -68,7 +68,7 @@ export const UserList: React.FC = () => {
 
       <div className={styles.listContainer}>
         {users.length === 0 ? (
-          <p className={styles.emptyMessage}>No users found</p>
+          <p className={styles.emptyMessage}>No se encontraron usuarios</p>
         ) : (
           <ul className={styles.list}>
             {users.map((user) => (

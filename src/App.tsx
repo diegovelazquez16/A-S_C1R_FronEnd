@@ -1,6 +1,6 @@
 import React from "react";
-import { UserList } from "./features/users/presentation/components/UserList/index.tsx";
-import { UserForm } from "./features/users/presentation/components/UserForm";
+import { UserList } from "./features/users/presentation/components/UserList/UserList.tsx";
+import { UserForm } from "./features/users/presentation/components/UserForm/UserForm.tsx";
 
 const App: React.FC = () => {
   const handleSave = () => {
