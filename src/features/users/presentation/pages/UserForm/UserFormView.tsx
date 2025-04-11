@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { User } from '../../../data/models/User';
-import { UserRepository } from '../../../data/repository/userRepository';
 import styles from './UserForm.module.css';
+import { UserFormViewModel } from '../../view/UserForm/UserFormViewModel';
 
 interface UserFormProps {
+  viewModel: UserFormViewModel;
   user?: User | null;
   onSave: () => void;
   onCancel: () => void;
@@ -11,68 +12,41 @@ interface UserFormProps {
 }
 
 export const UserForm: React.FC<UserFormProps> = ({ 
+  viewModel,
   user, 
   onSave, 
   onCancel,
-  forceShow = false 
+  forceShow = false
 }) => {
-  const [formData, setFormData] = useState<Omit<User, 'id'>>({
-    name: '',
-    email: '',
-    age: 0,
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const userRepository = new UserRepository();
+  const [formData, setFormData] = useState(viewModel.formData);
+  const [isLoading, setIsLoading] = useState(viewModel.isLoading);
+  const [error, setError] = useState(viewModel.error);
 
   useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name,
-        email: user.email,
-        age: user.age,
-      });
-    } else {
-      setFormData({
-        name: '',
-        email: '',
-        age: 0,
-      });
-    }
-  }, [user]);
+    const unsubscribe = viewModel.subscribe(() => {
+      setFormData({...viewModel.formData});
+      setIsLoading(viewModel.isLoading);
+      setError(viewModel.error);
+    });
+    
+    viewModel.initialize(user);
+    
+    return unsubscribe;
+  }, [viewModel, user]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === 'age' ? Number(value) : value,
-    }));
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    viewModel.handleInputChange(e);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      if (user) {
-        await userRepository.update({ ...formData, id: user.id });
-      } else {
-        await userRepository.create(formData);
-      }
-      onSave();
-      if (!user) {
-        setFormData({ name: '', email: '', age: 0 });
-      }
-    } catch (err) {
-      console.error('Error saving user:', err);
-      setError('Failed to save user. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    await viewModel.handleSubmit(user, onSave);
   };
 
-  if (!user && !forceShow && formData.name === '' && formData.email === '' && formData.age === 0) {
+  if (!user && !forceShow && 
+      formData.name === '' && 
+      formData.email === '' && 
+      formData.age === 0) {
     return null;
   }
 
@@ -89,20 +63,20 @@ export const UserForm: React.FC<UserFormProps> = ({
           id="name"
           name="name"
           value={formData.name}
-          onChange={handleChange}
+          onChange={handleInputChange}
           className={styles.input}
           required
         />
       </div>
 
       <div className={styles.formGroup}>
-        <label htmlFor="email" className={styles.label}>Correo electronico</label>
+        <label htmlFor="email" className={styles.label}>Correo electrónico</label>
         <input
           type="email"
           id="email"
           name="email"
           value={formData.email}
-          onChange={handleChange}
+          onChange={handleInputChange}
           className={styles.input}
           required
         />
@@ -114,8 +88,8 @@ export const UserForm: React.FC<UserFormProps> = ({
           type="number"
           id="age"
           name="age"
-          value={formData.age}
-          onChange={handleChange}
+          value={formData.age || ''}
+          onChange={handleInputChange}
           className={styles.input}
           min="0"
           required
